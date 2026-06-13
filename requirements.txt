@@ -1,6 +1,6 @@
 streamlit
-google-api-python-clien
-konlpy
+google-api-python-client
+kiwipiepy
 wordcloud
 matplotlib
 pandas
