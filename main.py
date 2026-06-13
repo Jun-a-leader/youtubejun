@@ -131,7 +131,7 @@ if st.button("🚀 댓글 분석 시작", use_container_width=True):
                             width=800,
                             height=600,
                             max_words=100,
-                            colormap="darkorg"
+                            colormap="plasma"
                         ).generate(processed_text)
                         
                         fig, ax = plt.subplots(figsize=(10, 8))
