@@ -1,1 +1,6 @@
-
+streamlit
+google-api-python-client
+konlpy
+wordcloud
+matplotlib
+pandas
