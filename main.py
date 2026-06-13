@@ -87,7 +87,7 @@ def process_multilingual_text(comments):
 st.set_page_config(page_title="유튜브 댓글 심층 분석기", layout="wide", page_icon="📊")
 
 st.title("📊 유튜브 댓글 심층 분석기")
-st.markdown("유튜브 링크를 입력하면 댓글을 수집하여 다국어 워드클라우드와 긍정/부정 분위기를 분석합니다.")
+st.markdown("유튜브 링크를 입력하면 댓글을 수집하여 다국어 워드클라우드와 긍정/부정 분위기를 분석합니다. /n 사용 전 Youtube API키를 확인해주세요. 키가 없다면 이용이 불가합니다. /n 키 확인은 (https://console.cloud.google.com/) 에서 가능합니다.")
 
 # 사이드바 - 설정
 st.sidebar.header("🔑 설정")
