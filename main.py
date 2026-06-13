@@ -86,7 +86,7 @@ def process_multilingual_text(comments):
 # --- 스트림릿 UI 시작 ---
 st.set_page_config(page_title="유튜브 댓글 심층 분석기", layout="wide", page_icon="📊")
 
-st.title("📊 유튜브 댓글 심층 분석기 (한글/영어 통합)")
+st.title("📊 유튜브 댓글 심층 분석기")
 st.markdown("유튜브 링크를 입력하면 댓글을 수집하여 다국어 워드클라우드와 긍정/부정 분위기를 분석합니다.")
 
 # 사이드바 - 설정
