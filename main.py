@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 import urllib.request
 import os
 
-# 1. 한글 폰트 다운로드 함수 (워드클라우드 깨짐 방지)
+# 1. 구글 저장소에서 한글 폰트 안전하게 다운로드
 @st.cache_resource
 def download_font():
-    font_url = "https://github.com/naver/nanum-fonts/raw/main/成熟/NanumGothic.ttf"
+    font_url = "https://github.com/google/fonts/raw/main/ofl/nanumgothic/NanumGothic-Regular.ttf"
     font_path = "NanumGothic.ttf"
     if not os.path.exists(font_path):
         with st.spinner("한글 폰트를 다운로드 중입니다..."):
@@ -53,28 +53,41 @@ def get_youtube_comments(api_key, video_id, max_results=100):
         st.error(f"API 호출 중 오류 발생: {e}")
         return []
 
-# 4. Kiwi 형태소 분석기를 이용한 명사 추출 함수
-def process_korean_text(comments):
+# 4. 한글(명사) + 영어(단어) 통합 처리 함수
+def process_multilingual_text(comments):
     kiwi = Kiwi()
-    all_text = " ".join(comments)
-    # 한글과 공백만 남기기
-    clean_text = re.sub(r'[^가-힣\s]', '', all_text)
+    combined_words = []
     
-    # 형태소 분석 후 명사(NNG, NNP)만 추출
-    results = kiwi.tokenize(clean_text)
-    words = [token.form for token in results if token.tag in ['NNG', 'NNP'] and len(token.form) > 1]
+    # 불용어 설정 (한글/영어 공통)
+    stopwords = {
+        '유튜브', '영상', '이거', '진짜', '너무', '완전', '보고', '보는데', '댓글', '생각', '하나',
+        'the', 'a', 'an', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'to', 'for', 'of', 'in', 'on', 'at',
+        'this', 'that', 'it', 'you', 'i', 'my', 'me', 'your', 'with', 'so', 'just', 'like', 'not', 'no'
+    }
     
-    # 불용어 처리
-    stopwords = ['유튜브', '영상', '이거', '진짜', '너무', '완전', '보고', '보는데', '댓글', '생각']
-    words = [word for word in words if word not in stopwords]
-    
-    return " ".join(words)
+    for comment in comments:
+        # 1. 영어 단어 추출 (소문자 변환 후 2글자 이상만)
+        english_words = re.findall(r'[a-zA-Z]+', comment)
+        for word in english_words:
+            w_lower = word.lower()
+            if len(w_lower) > 1 and w_lower not in stopwords:
+                combined_words.append(w_lower)
+                
+        # 2. 한글 명사 추출 (2글자 이상만)
+        clean_korean = re.sub(r'[^가-힣\s]', '', comment)
+        if clean_korean.strip():
+            tokens = kiwi.tokenize(clean_korean)
+            for token in tokens:
+                if token.tag in ['NNG', 'NNP'] and len(token.form) > 1 and token.form not in stopwords:
+                    combined_words.append(token.form)
+                    
+    return " ".join(combined_words)
 
 # --- 스트림릿 UI 시작 ---
 st.set_page_config(page_title="유튜브 댓글 심층 분석기", layout="wide", page_icon="📊")
 
-st.title("📊 유튜브 댓글 심층 분석기")
-st.markdown("유튜브 링크를 입력하면 댓글을 수집하여 핵심 키워드(워드클라우드)와 긍정/부정 분위기를 분석합니다.")
+st.title("📊 유튜브 댓글 심층 분석기 (한글/영어 통합)")
+st.markdown("유튜브 링크를 입력하면 댓글을 수집하여 다국어 워드클라우드와 긍정/부정 분위기를 분석합니다.")
 
 # 사이드바 - 설정
 st.sidebar.header("🔑 설정")
@@ -104,8 +117,8 @@ if st.button("🚀 댓글 분석 시작", use_container_width=True):
                 df = pd.DataFrame(comments, columns=["댓글 내용"])
                 font_path = download_font()
                 
-                with st.spinner("🧠 한글 형태소 분석 및 데이터 가공 중..."):
-                    processed_text = process_korean_text(comments)
+                with st.spinner("🧠 한글/영어 텍스트 분석 및 가공 중..."):
+                    processed_text = process_multilingual_text(comments)
                 
                 col1, col2 = st.columns([1, 1])
                 
@@ -118,7 +131,7 @@ if st.button("🚀 댓글 분석 시작", use_container_width=True):
                             width=800,
                             height=600,
                             max_words=100,
-                            colormap="crimson"
+                            colormap="darkorg"
                         ).generate(processed_text)
                         
                         fig, ax = plt.subplots(figsize=(10, 8))
@@ -126,7 +139,7 @@ if st.button("🚀 댓글 분석 시작", use_container_width=True):
                         ax.axis("off")
                         st.pyplot(fig)
                     else:
-                        st.info("분석할 수 있는 유의미한 한글 명사 단어가 부족합니다.")
+                        st.info("분석할 수 있는 유의미한 단어가 부족합니다.")
                 
                 with col2:
                     st.subheader("💬 수집된 원본 댓글 예시 (최신순)")
@@ -135,11 +148,12 @@ if st.button("🚀 댓글 분석 시작", use_container_width=True):
                 st.markdown("---")
                 st.subheader("📈 간단 감정 트렌드 분석")
                 
-                pos_words = ['좋다', '최고', '감사', '유익', '재밌', '대박', '짱', '지렸다', '최고다', '재미', '감동']
-                neg_words = ['노잼', '실망', '별로', '노답', '최악', '아쉽', '불편', '삭제', '거름', '지루']
+                # 다국어 감정 단어 체크 리스트
+                pos_words = ['좋다', '최고', '감사', '유익', '재밌', '대박', '짱', '지렸다', '재미', '감동', 'good', 'best', 'love', 'awesome', 'amazing', 'great', 'cool']
+                neg_words = ['노잼', '실망', '별로', '노답', '최악', '아쉽', '불편', '삭제', '거름', '지루', 'bad', 'worst', 'boring', 'disappoint', 'hate', 'waste']
                 
-                pos_count = sum(1 for c in comments if any(w in c for w in pos_words))
-                neg_count = sum(1 for c in comments if any(w in c for w in neg_words))
+                pos_count = sum(1 for c in comments if any(w in c.lower() for w in pos_words))
+                neg_count = sum(1 for c in comments if any(w in c.lower() for w in neg_words))
                 neutral_count = len(comments) - (pos_count + neg_count)
                 
                 m_col1, m_col2, m_col3 = st.columns(3)
