@@ -94,8 +94,7 @@ st.sidebar.header("🔑 설정")
 api_key = st.sidebar.text_input("YouTube API Key를 입력하세요. 입력 완료 후 Enter키로 적용합니다", type="password")
 
 
-##############################################################################################################################
-max_comments = st.sidebar.slider(value + "개의 댓글을 분석합니다", min_value=100, max_value=50000, value=300, step=100)
+max_comments = st.sidebar.slider("분석할 댓글 개수", min_value=100, max_value=50000, value=300, step=100)
 
 # 메인 화면 - 입력창
 video_url = st.text_input("분석할 유튜브 동영상 링크를 입력하세요:", placeholder="https://www.youtube.com/watch?v=...")
